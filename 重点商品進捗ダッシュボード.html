@@ -49,6 +49,7 @@ main{padding:26px 28px 60px;max-width:1400px;margin:0 auto;}
 .section-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 12px;flex-wrap:wrap;gap:10px;}
 .section-head h2{font-size:15px;margin:0;font-weight:700;}
 .section-head h2 .store-tag{color:var(--red);}
+.section-hint{font-size:15px;color:var(--text);font-weight:400;margin-left:225px;}
 .matrix-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:auto;margin-bottom:34px;}
 .ca-chart{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px 14px;padding:22px 16px 10px;}
 .ca-chart-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));margin-bottom:34px;}
@@ -86,16 +87,19 @@ main{padding:26px 28px 60px;max-width:1400px;margin:0 auto;}
 .rank-row .rstore{font-size:10px;color:var(--text-dim);margin-left:4px;font-weight:400;}
 .rank-row .rqty{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--qty);}
 .rank-list-lg{padding:8px 4px;}
-.rank-row-lg{display:flex;align-items:center;gap:16px;padding:16px 6px;border-bottom:1px solid var(--line);}
-.rank-badge-lg{width:30px;height:30px;font-size:14px;}
-.rank-plain-lg{width:30px;font-size:16px;}
-.rname-lg{font-size:18px;}
-.rstore-lg{font-size:14px;margin-left:8px;}
-.rqty-lg{font-size:20px;}
+.rank-row-lg{display:flex;align-items:center;gap:14px;padding:16px 6px;border-bottom:1px solid var(--line);}
+.rank-row-lg .rname-lg{flex:0 1 auto;}
+.rank-row-lg .rqty-lg{margin-left:40px;}
+.rank-badge.rank-badge-lg{width:38px;height:38px;font-size:17px;}
+.rank-plain.rank-plain-lg{width:38px;font-size:19px;}
+.rname.rname-lg{font-size:24px;}
+.rstore.rstore-lg{font-size:16px;margin-left:8px;}
+.rqty.rqty-lg{font-size:34px;}
 footer{text-align:center;color:var(--text-dim);font-size:11px;padding:20px;font-family:var(--mono);}
 .modal-overlay{position:fixed;inset:0;background:rgba(8,9,12,.68);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;}
 .modal-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:560px;width:100%;max-height:78vh;overflow:auto;padding:20px 22px 18px;}
 .modal-box-lg{max-width:95vw;width:1280px;max-height:92vh;}
+.modal-box-lg.modal-list{width:700px;max-width:92vw;}
 .modal-box-lg .product-chart-lg{display:flex;align-items:flex-end;gap:24px;height:520px;padding:16px 10px 0;overflow-x:auto;}
 .modal-box-lg .pbar-col-lg{flex:1;min-width:80px;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;}
 .modal-box-lg .pbar-pct-lg{font-family:var(--mono);font-size:18px;color:var(--text-dim);margin-bottom:8px;font-weight:700;}
@@ -103,7 +107,7 @@ footer{text-align:center;color:var(--text-dim);font-size:11px;padding:20px;font-
 .modal-box-lg .pbar-col-lg[onclick]:hover{background:#20262f;}
 .modal-box-lg .pbar-col-lg[onclick]:hover .pbar-track-lg{outline:2px solid var(--qty);}
 .modal-box-lg .pbar-col-lg[onclick]:hover .pbar-label-lg{color:var(--text);}
-.modal-sub a{text-decoration:underline;cursor:pointer;}
+.modal-sub a{text-decoration:underline;cursor:pointer;color:var(--qty);}
 .modal-sub a:hover{color:var(--text);}
 .modal-box-lg .pbar-track-lg{width:100%;max-width:56px;height:400px;background:#2a313d;border-radius:6px 6px 0 0;display:flex;align-items:flex-end;overflow:hidden;}
 .modal-box-lg .pbar-fill{width:100%;border-radius:6px 6px 0 0;}
@@ -141,8 +145,9 @@ table.detail-table td:nth-child(3),table.detail-table td:nth-child(4){font-famil
   <div class="section-head"><h2>店舗別進捗サマリー(対象6店舗)</h2></div>
   <div class="product-grid store-summary-grid" id="storeSummaryGrid"></div>
 
+  <div class="section-head" style="margin-top:26px;"><h2>店舗別 重点商品 達成率</h2></div>
   <div class="gauge-row" id="gaugeRow"></div>
-  <div class="section-head"><h2>CA別進捗 ー <span class="store-tag" id="storeTag"></span></h2></div>
+  <div class="section-head" style="justify-content:flex-start;"><h2>CA別進捗 ー <span class="store-tag" id="storeTag"></span></h2><span class="section-hint">上記の店舗を選択するとCA別進捗の店舗が切り替わります</span></div>
   <div class="product-grid ca-chart-grid" id="caChart"></div>
   <div class="section-head"><h2>商品別サマリー(対象6店舗)</h2></div>
   <div class="product-grid" id="productGrid"></div>
@@ -241,6 +246,18 @@ function renderAll(){
 }
 
 function pctClass(pct){ if(pct>=100) return 'fill-high'; if(pct>=80) return 'fill-mid'; return 'fill-low'; }
+
+const UNIT_KO_PRODUCTS = new Set([
+  "メタルトリートメント MT-10",
+  "クーラントエナジー",
+  "抗菌・抗ウィルスコート",
+  "ギヤボックス添加剤　SuperADD1201"
+]);
+function unitFor(p){ return UNIT_KO_PRODUCTS.has(p) ? '個' : '台'; }
+function setModalMode(mode){
+  const box = document.querySelector('#bigChartModal .modal-box');
+  if(box) box.classList.toggle('modal-list', mode === 'list');
+}
 const PRODUCT_SHORT = {
   "エンジンリフレッシュ": "E/Gリ",
   "エアコン潤滑剤 NC200マキシクール": "AC潤滑",
@@ -279,14 +296,18 @@ function renderStoreSummaryGrid(){
   });
 }
 
+let _lastStoreForSummary = null;
+
 function openStoreSummaryDetail(storeName){
+  _lastStoreForSummary = storeName;
+  setModalMode('chart');
   const store = REPORT.stores.find(s => s.name === storeName);
   if(!store) return;
   let bars = '';
   REPORT.products.forEach(p => {
     const info = store.products[p];
     const pct = info.target ? Math.round(info.total/info.target*100) : 0;
-    bars += `<div class="pbar-col-lg">
+    bars += `<div class="pbar-col-lg" onclick="openProductStoreDetail('${store.name}','${p.replace(/'/g,"\'")}','store')">
       <div class="pbar-pct-lg">${pct}%</div>
       <div class="pbar-track-lg"><div class="pbar-fill ${pctClass(pct)}" style="height:${Math.min(pct,100)}%"></div></div>
       <div class="pbar-label-lg">${p}</div>
@@ -295,12 +316,13 @@ function openStoreSummaryDetail(storeName){
   });
   document.getElementById('bigChartModalTitle').textContent = `${store.name}店 進捗サマリー`;
   document.getElementById('bigChartModalSub').textContent =
-    `達成 ${store.achieved.length}/10商品 ー 達成率合計 ${store.pct_sum}/1000`;
+    `達成 ${store.achieved.length}/10商品 ー 達成率合計 ${store.pct_sum}/1000(バーをクリックで担当CA別の内訳を表示)`;
   document.getElementById('bigChartModalBody').innerHTML = `<div class="product-chart-lg">${bars}</div>`;
   document.getElementById('bigChartModal').style.display = 'flex';
 }
 
 function openCaGroupDetail(storeIdx, pi){
+  setModalMode('chart');
   const store = REPORT.stores[storeIdx];
   const p = REPORT.products[pi];
   const info = store.products[p];
@@ -319,7 +341,7 @@ function openCaGroupDetail(storeIdx, pi){
   });
   const targetTxt = info.target!=null ? `目標${info.target} / ` : '';
   document.getElementById('bigChartModalTitle').textContent = `${store.name}店 ー ${p}`;
-  document.getElementById('bigChartModalSub').textContent = `${targetTxt}計 ${info.total}個(バーをクリックで実績明細を表示)`;
+  document.getElementById('bigChartModalSub').textContent = `${targetTxt}計 ${info.total}${unitFor(p)}(バーをクリックで実績明細を表示)`;
   document.getElementById('bigChartModalBody').innerHTML = `<div class="product-chart-lg">${bars}</div>`;
   document.getElementById('bigChartModal').style.display = 'flex';
 }
@@ -460,6 +482,7 @@ function renderProductSummary(){
 
 function openProductSummaryDetail(p){
   _lastProductForSummary = p;
+  setModalMode('chart');
   const targetStores = REPORT.stores.filter(s=>s.has_target);
   let totalActual = 0, totalTarget = 0;
   let bars = '';
@@ -467,7 +490,7 @@ function openProductSummaryDetail(p){
     const info = store.products[p];
     const pct = info.target ? Math.round(info.total/info.target*100) : 0;
     totalActual += info.total; totalTarget += (info.target || 0);
-    bars += `<div class="pbar-col-lg" style="cursor:pointer;" onclick="openProductStoreDetail('${store.name}','${p.replace(/'/g,"\'")}')">
+    bars += `<div class="pbar-col-lg" onclick="openProductStoreDetail('${store.name}','${p.replace(/'/g,"\'")}','product')">
       <div class="pbar-pct-lg">${pct}%</div>
       <div class="pbar-track-lg"><div class="pbar-fill ${pctClass(pct)}" style="height:${Math.min(pct,100)}%"></div></div>
       <div class="pbar-label-lg">${store.name}</div>
@@ -482,20 +505,24 @@ function openProductSummaryDetail(p){
 
 let _lastProductForSummary = null;
 
-function openProductStoreDetail(storeName, p){
+function openProductStoreDetail(storeName, p, origin){
+  setModalMode('list');
   const store = REPORT.stores.find(s => s.name === storeName);
   if(!store) return;
   const info = store.products[p];
+  const unit = unitFor(p);
   const entries = store.cas.map(ca => ({ca, qty: info.by_ca[ca].qty}))
     .filter(e => e.qty > 0)
     .sort((a,b) => b.qty - a.qty);
   const rows = entries.length ? entries.map((e,i)=>{
     const badge = i<3 ? `<div class="rank-badge rank-badge-lg rank-${i+1}">${i+1}</div>` : `<div class="rank-plain rank-plain-lg">${i+1}</div>`;
-    return `<div class="rank-row rank-row-lg">${badge}<div class="rname rname-lg">${e.ca}</div><div class="rqty rqty-lg">${e.qty}</div></div>`;
+    return `<div class="rank-row rank-row-lg">${badge}<div class="rname rname-lg">${e.ca}</div><div class="rqty rqty-lg">${e.qty}${unit}</div></div>`;
   }).join('') : `<div style="color:var(--text-dim);font-size:14px;padding:12px 0;">実績なし</div>`;
+  const backHtml = origin === 'store'
+    ? `<a href="javascript:void(0)" onclick="goBackToStoreSummary()">← ${store.name}店 進捗サマリーに戻る</a>`
+    : `<a href="javascript:void(0)" onclick="goBackToProductSummary()">← 店舗別サマリーに戻る</a>`;
   document.getElementById('bigChartModalTitle').textContent = `${store.name}店 ー ${p}`;
-  document.getElementById('bigChartModalSub').innerHTML =
-    `<a href="javascript:void(0)" onclick="goBackToProductSummary()" style="color:var(--qty);">← 店舗別サマリーに戻る</a>`;
+  document.getElementById('bigChartModalSub').innerHTML = backHtml;
   document.getElementById('bigChartModalBody').innerHTML = `<div class="rank-list-lg">${rows}</div>`;
   document.getElementById('bigChartModal').style.display = 'flex';
 }
@@ -504,17 +531,22 @@ function goBackToProductSummary(){
   if(_lastProductForSummary) openProductSummaryDetail(_lastProductForSummary);
 }
 
+function goBackToStoreSummary(){
+  if(_lastStoreForSummary) openStoreSummaryDetail(_lastStoreForSummary);
+}
+
 function renderProductRanking(){
   const grid = document.getElementById('rankingGrid');
   grid.innerHTML = '';
   REPORT.products.forEach(p => {
     const top5 = REPORT.ranking[p];
+    const unit = unitFor(p);
     const card = document.createElement('div');
     card.className = 'product-card';
     card.style.cursor = 'pointer';
     let rows = top5.length ? top5.map((e,i)=>{
       const badge = i<3 ? `<div class="rank-badge rank-${i+1}">${i+1}</div>` : `<div class="rank-plain">${i+1}</div>`;
-      return `<div class="rank-row">${badge}<div class="rname">${e.ca}<span class="rstore">(${e.store})</span></div><div class="rqty">${e.qty}</div></div>`;
+      return `<div class="rank-row">${badge}<div class="rname">${e.ca}<span class="rstore">(${e.store})</span></div><div class="rqty">${e.qty}${unit}</div></div>`;
     }).join('') : `<div style="color:var(--text-dim);font-size:12px;padding:6px 0;">実績なし</div>`;
     card.innerHTML = `<div class="pname">${p}</div>${rows}`;
     card.onclick = () => openProductRankingDetail(p);
@@ -523,10 +555,12 @@ function renderProductRanking(){
 }
 
 function openProductRankingDetail(p){
+  setModalMode('list');
   const top5 = REPORT.ranking[p];
+  const unit = unitFor(p);
   const rows = top5.length ? top5.map((e,i)=>{
     const badge = i<3 ? `<div class="rank-badge rank-badge-lg rank-${i+1}">${i+1}</div>` : `<div class="rank-plain rank-plain-lg">${i+1}</div>`;
-    return `<div class="rank-row rank-row-lg">${badge}<div class="rname rname-lg">${e.ca}<span class="rstore rstore-lg">(${e.store})</span></div><div class="rqty rqty-lg">${e.qty}</div></div>`;
+    return `<div class="rank-row rank-row-lg">${badge}<div class="rname rname-lg">${e.ca}<span class="rstore rstore-lg">(${e.store})</span></div><div class="rqty rqty-lg">${e.qty}${unit}</div></div>`;
   }).join('') : `<div style="color:var(--text-dim);font-size:14px;padding:12px 0;">実績なし</div>`;
   document.getElementById('bigChartModalTitle').textContent = `${p} ー CA販売ランキング`;
   document.getElementById('bigChartModalSub').textContent = `対象6店舗 上位${top5.length}名`;
